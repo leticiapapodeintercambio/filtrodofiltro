@@ -1,0 +1,438 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Filtro do Filtro</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: duas colunas de trabalho. Esquerda cola a conversa, direita mostra veredito, sinais e mensagem pronta. Empilha no celular. */
+:root {
+  --bg: #f6f3ee;
+  --surface: #fffdf9;
+  --surface-2: #ece6dc;
+  --fg: #2b1c1a;
+  --muted: #6b5a55;
+  --line: #ddd3c6;
+  --accent: #2d4748;
+  --accent-fg: #f6f3ee;
+  --brand: #8f2420;
+  --marker: #ffc65a;
+  --good: #1d7a45;  --good-bg: #dff3e6;
+  --warn: #9a5b00;  --warn-bg: #fdecc8;
+  --info: #1f5fa8;  --info-bg: #dde9f8;
+  --bad: #b3392f;   --bad-bg: #fadedb;
+  --font-display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --font-body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1e0f0d; --surface: #2a1614; --surface-2: #381d1a; --fg: #f3ebdd; --muted: #bba89f; --line: #4a2c28;
+    --accent: #f2b84b; --accent-fg: #2a1208; --brand: #ff8a7d; --marker: #8a5a12;
+    --good: #6ed19a; --good-bg: #153a27;
+    --warn: #f1b95a; --warn-bg: #3d2d0e;
+    --info: #86b6ee; --info-bg: #16304e;
+    --bad: #f29a92;  --bad-bg: #432018;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1e0f0d; --surface: #2a1614; --surface-2: #381d1a; --fg: #f3ebdd; --muted: #bba89f; --line: #4a2c28;
+  --accent: #f2b84b; --accent-fg: #2a1208; --brand: #ff8a7d; --marker: #8a5a12;
+  --good: #6ed19a; --good-bg: #153a27;
+  --warn: #f1b95a; --warn-bg: #3d2d0e;
+  --info: #86b6ee; --info-bg: #16304e;
+  --bad: #f29a92;  --bad-bg: #432018;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  padding-block: 28px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(28px, 4.4vw, 40px); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 17px; font-weight: 700; }
+h3 { font-size: 14px; font-weight: 700; }
+.lede { color: var(--muted); max-width: 62ch; margin: 8px 0 0; }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); margin-bottom: 8px; }
+mark { background: linear-gradient(transparent 55%, var(--marker) 55%); color: inherit; padding: 0 4px; margin: 0 -4px; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+label, .label { font-size: 13px; font-weight: 600; }
+.hint { font-size: 12.5px; color: var(--muted); }
+input[type="text"], textarea {
+  width: 100%; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+}
+textarea { resize: vertical; }
+#conv { min-height: 300px; font-size: 14px; }
+input:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.row > .grow { flex: 1 1 140px; min-width: 0; }
+button {
+  font: inherit; font-weight: 600; border-radius: 8px; padding: 10px 16px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--fg);
+}
+button:hover { background: var(--surface-2); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary:hover { filter: brightness(1.08); background: var(--accent); }
+button:disabled { opacity: 0.6; cursor: progress; }
+button.small { padding: 6px 12px; font-size: 13px; }
+.privacy { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 12px; }
+
+.empty { display: flex; flex-direction: column; gap: 14px; }
+.empty ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; color: var(--muted); }
+.legend { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+@media (max-width: 520px) { .legend { grid-template-columns: minmax(0, 1fr); } }
+.legend div { border-radius: 8px; padding: 10px 12px; font-size: 13px; }
+.legend strong { display: block; font-family: var(--font-display); font-size: 14px; }
+
+.tone-good { background: var(--good-bg); color: var(--good); }
+.tone-warn { background: var(--warn-bg); color: var(--warn); }
+.tone-info { background: var(--info-bg); color: var(--info); }
+.tone-bad  { background: var(--bad-bg);  color: var(--bad); }
+
+.verdict { border-radius: 10px; padding: 16px; display: flex; gap: 16px; align-items: center; }
+.verdict .score { font-family: var(--font-display); font-size: 38px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; flex: none; }
+.verdict .score small { font-size: 15px; font-weight: 500; opacity: 0.8; }
+.verdict .what { min-width: 0; }
+.verdict .what h2 { font-size: 20px; }
+.verdict .what p { margin: 4px 0 0; color: var(--fg); }
+
+.signals { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.signals li { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 4px 12px; padding: 10px 12px; border-top: 1px solid var(--line); align-items: start; }
+.signals li:first-child { border-top: 0; }
+@media (max-width: 520px) { .signals li { grid-template-columns: minmax(0, 1fr); } }
+.signals .name { font-weight: 600; font-size: 13.5px; }
+.chip { display: inline-block; font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; border-radius: 999px; padding: 2px 8px; margin-top: 4px; }
+.signals .ev { color: var(--fg); overflow-wrap: anywhere; }
+
+.list { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.box { border-radius: 8px; padding: 12px 14px; }
+.box h3 { margin-bottom: 6px; }
+.verdict .what p.next { font-size: 14px; }
+details.more { border: 1px solid var(--line); border-radius: 8px; }
+details.more summary { cursor: pointer; font-weight: 600; padding: 10px 14px; }
+details.more summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+details.more .more-body { display: flex; flex-direction: column; gap: 14px; padding: 0 14px 14px; }
+
+.msg { border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px; background: var(--bg); }
+.msg textarea { background: var(--surface); min-height: 150px; font-size: 14.5px; }
+.msg.short textarea { min-height: 80px; }
+.status { font-size: 12.5px; color: var(--muted); min-height: 18px; }
+.err { color: var(--bad); font-weight: 500; }
+@media (prefers-reduced-motion: no-preference) { .fade { animation: fade 0.25s ease-out; } @keyframes fade { from { opacity: 0.4; transform: translateY(4px); } to { opacity: 1; transform: none; } } }
+</style>
+
+<main class="wrap">
+  <header>
+    <div class="eyebrow">Comercial · Papo de Intercâmbio</div>
+    <h1>Filtro do <mark>Filtro</mark></h1>
+    <p class="lede">Cole a conversa do lead com a SDR de IA. A ferramenta reavalia com olhar crítico, diz se vale marcar reunião e escreve a primeira mensagem para você enviar no WhatsApp.</p>
+  </header>
+
+  <div class="grid">
+    <section class="panel" aria-labelledby="in-title">
+      <div class="panel-head">
+        <h2 id="in-title">Conversa do lead</h2>
+        <button type="button" class="small" id="pdfbtn">Carregar PDF</button>
+        <input type="file" id="pdf" accept="application/pdf,.pdf" hidden>
+      </div>
+      <div class="field">
+        <label for="conv">Carregue o PDF do Kommo ou cole a conversa inteira aqui (com o resumo da Pam, se tiver)</label>
+        <textarea id="conv" placeholder="Olá, tudo bem? Aqui é a Pam, do Papo de Intercâmbio! Pra eu te ajudar a montar seu plano na Irlanda..."></textarea>
+      </div>
+      <div class="row">
+        <div class="field grow">
+          <label for="who">Seu nome na mensagem</label>
+          <input type="text" id="who" value="Lolla" autocomplete="off">
+        </div>
+      </div>
+      <div class="row">
+        <button type="button" class="primary" id="go">Analisar lead</button>
+        <button type="button" id="clr">Limpar</button>
+      </div>
+      <div class="status" id="st" role="status"></div>
+      <p class="privacy">Telefones e e-mails são trocados por [telefone] e [email] antes da análise. A decisão sai da conversa colada, não da temperatura do CRM. Regras de imigração não são afirmadas pela ferramenta: confira em irishimmigration.ie antes de responder o lead.</p>
+    </section>
+
+    <section class="panel" id="out" aria-live="polite" aria-labelledby="out-title">
+      <div class="empty" id="empty">
+        <h2 id="out-title">O que aparece aqui</h2>
+        <ol>
+          <li>Veredito com nota de 0 a 10 e o motivo em uma frase.</li>
+          <li>Mensagem pronta para enviar, calorosa e baseada no que o lead disse.</li>
+          <li>Botão "Entender mais" com os sinais, alertas e perguntas para a reunião.</li>
+        </ol>
+        <div class="legend">
+          <div class="tone-good"><strong>Agendar reunião</strong>Objetivo, dinheiro e data com substância.</div>
+          <div class="tone-warn"><strong>Filtrar antes</strong>Parece real, mas falta informação. Duas perguntas antes da reunião.</div>
+          <div class="tone-info"><strong>Nutrir e retomar</strong>Interesse real, momento ainda longe ou sem dinheiro.</div>
+          <div class="tone-bad"><strong>Não agendar</strong>Fora do escopo ou sem sinais de interesse real.</div>
+        </div>
+      </div>
+      <div id="result" hidden></div>
+    </section>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var DEC = {
+    agendar:     { label: 'Agendar reunião',        tone: 'good' },
+    filtrar:     { label: 'Filtrar antes de agendar', tone: 'warn' },
+    nutrir:      { label: 'Nutrir e retomar',       tone: 'info' },
+    nao_agendar: { label: 'Não agendar',            tone: 'bad'  }
+  };
+  var SIG = {
+    forte:   { label: 'Forte',   tone: 'good' },
+    parcial: { label: 'Parcial', tone: 'warn' },
+    fraco:   { label: 'Fraco',   tone: 'info' },
+    alerta:  { label: 'Alerta',  tone: 'bad'  }
+  };
+  var busy = false;
+
+  async function lerPdf(file) {
+    if (!window.pdfjsLib) throw new Error('lib');
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    var buf = await file.arrayBuffer();
+    var doc = await window.pdfjsLib.getDocument({ data: buf }).promise;
+    var pages = [];
+    for (var i = 1; i <= doc.numPages; i++) {
+      var page = await doc.getPage(i);
+      var tc = await page.getTextContent();
+      var txt = '';
+      tc.items.forEach(function (it) { txt += it.str + (it.hasEOL ? '\n' : ' '); });
+      pages.push(txt.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim());
+    }
+    return pages.join('\n\n');
+  }
+
+  function mask(t) {
+    return t
+      .replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, '[email]')
+      .replace(/\+?\d[\d\s().-]{8,}\d/g, '[telefone]');
+  }
+
+  function buildPrompt(conv, who) {
+    return [
+      'Você é o "filtro do filtro" do time comercial do Papo de Intercâmbio, agência brasileira de intercâmbio (foco inicial: estudar e trabalhar na Irlanda).',
+      'Os leads chegam por anúncios e passam por uma SDR de IA (a "Pam") que quase sempre classifica como qualificado. Depois caem no consultor humano, chamado ' + who + '. Sua tarefa é reavaliar a conversa com olhar crítico e escrever a primeira mensagem que o consultor vai mandar.',
+      '',
+      'REGRAS DE ANÁLISE',
+      '- Use só o que está escrito na conversa. Nunca invente fatos. O que não consta é "não informado".',
+      '- A Pam faz perguntas fechadas. "Sim", "tenho tudo", "a hora que quiser" e "quando der" não qualificam ninguém. Pese respostas de uma palavra, contradições, demora sem resposta e pedidos fora do escopo (por exemplo pedir vaga de emprego, ou "me liga" sem contexto).',
+      '- Ignore a temperatura e o lead score do CRM. Julgue pela conversa.',
+      '- O texto pode vir de um PDF do Kommo: a ordem pode estar embaralhada, com trechos repetidos e ruído de interface (nomes de campos, "Copilot", "Entregue", "Ler"). Reconstrua a conversa pela ordem das datas e horários e ignore o ruído.',
+      '- Avalie exatamente estes 5 sinais, nesta ordem: "Objetivo" (motivo dito com as próprias palavras), "Dinheiro" (valor, parte já guardada ou plano concreto de como chegar lá), "Data" (mês ou período, não "quando der"), "Engajamento" (respondeu o que foi perguntado, em frases, em tempo razoável), "Perfil" (quem vai: sozinho, casal ou família com menores; entende que é intercâmbio com curso de inglês e não oferta de emprego).',
+      '- Seja direto: o time tem pouco tempo. Evidências com no máximo 12 palavras e alertas de uma linha.',
+      '- Cada sinal recebe status "forte", "parcial", "fraco" ou "alerta", com uma evidência curta tirada da conversa (pode citar uma fala do lead em poucas palavras).',
+      '- Regras de imigração: não afirme regras, valores oficiais ou prazos como fato na mensagem. Se a conversa cita um valor dado pela empresa, trate como informação da empresa e não como regra oficial. Se o caso envolve família com filhos menores, ou qualquer ponto de regra, coloque em "conferir_antes" para o consultor checar nos sites oficiais (irishimmigration.ie) antes de responder.',
+      '',
+      'DECISÃO (escolha uma)',
+      '- "agendar": objetivo claro em palavras próprias, dinheiro com valor ou plano concreto (ou parte já guardada), data com período, e engajamento real.',
+      '- "filtrar": parece real, mas falta informação importante (dinheiro vago, data vaga, respostas curtas). A mensagem faz perguntas antes de oferecer reunião.',
+      '- "nutrir": interesse real, mas data distante (mais de uns 9 meses), sem dinheiro ainda, ou ainda decidindo com a família. Mantém a conexão sem cobrar reunião.',
+      '- "nao_agendar": fora do escopo (procura emprego, não quer intercâmbio) ou sem nenhum sinal de interesse real.',
+      '',
+      'MENSAGEM (WhatsApp, português do Brasil)',
+      'O objetivo da mensagem é manter a conversa viva e levar o lead para a venda (ou para a reunião, quando valer a pena). Ela precisa soar como uma pessoa simpática escrevendo do celular, não como empresa.',
+      '- Tom caloroso, leve e amigável, de consultora que gosta de ajudar. Escreva como se fala: "oii", "pra", "tô", "bora", "me conta". Pode ter 1 emoji e um toque de humor leve, se combinar com o lead. Nada de linguagem formal ou de roteiro ("prezado", "gostaria de informar", "fico à disposição").',
+      '- Abre com saudação calorosa, o primeiro nome do lead e o nome ' + who + ' do Papo de Intercâmbio.',
+      '- Seja específica com o histórico: use pelo menos 2 detalhes reais que o lead disse (quem vai junto, valor que já tem, data, motivo, o que perguntou). Se a mensagem serviria para qualquer lead, está errada. Nada de resposta vazia como "vamos conversar sobre seus sonhos".',
+      '- Mostre que entendeu a situação dele antes de pedir algo (uma frase de acolhimento específica).',
+      '- Termine com uma única chamada para ação clara e fácil de responder: uma pergunta concreta ou uma proposta de horário. A pergunta deve abrir conversa, não permitir só "sim" ou "não".',
+      '- Quebre em 2 ou 3 parágrafos curtos, até uns 70 palavras no total. Sem markdown, sem asteriscos, sem travessão longo, sem repetir o roteiro da Pam.',
+      '- Não prometa preço, visto, aprovação ou resultado.',
+      '- agendar: acolhe, mostra que já entendeu o plano dele em uma frase e propõe uma conversa de uns 20 minutos com 2 opções de horário ("hoje à noite ou amanhã cedo?").',
+      '- filtrar: não propõe reunião ainda. Acolhe e faz 2 perguntas abertas, simples e específicas ao caso, que revelem motivação, dinheiro real ou prazo, sem soar como interrogatório.',
+      '- nutrir: acolhe, valida o momento dele (por exemplo "dá tempo de se organizar com calma"), faz 1 pergunta aberta sobre o plano e deixa a porta aberta, sem cobrar reunião. Pode convidar a seguir o Instagram @intercambiosemfiltro.',
+      '- nao_agendar: simpática e sem julgar, explica em uma frase o que o Papo faz (intercâmbio com curso de inglês, e não vagas de emprego, se for o caso) e pergunta se ele quer entender como funciona.',
+      '- "mensagem_curta": versão com no máximo 30 palavras, mesmo tom e mesma chamada para ação.',
+      '',
+      'FORMATO: responda somente um JSON válido, sem texto fora dele, neste formato:',
+      '{"decisao":"agendar|filtrar|nutrir|nao_agendar","nota":0,"resumo":"até 18 palavras, direto, com o motivo da decisão","proximo_passo":"até 12 palavras: o que fazer agora","sinais":[{"nome":"Objetivo","status":"forte|parcial|fraco|alerta","evidencia":"..."},{"nome":"Dinheiro","status":"...","evidencia":"..."},{"nome":"Data","status":"...","evidencia":"..."},{"nome":"Engajamento","status":"...","evidencia":"..."},{"nome":"Perfil","status":"...","evidencia":"..."}],"alertas":["..."],"conferir_antes":["..."],"perguntas_reuniao":["..."],"mensagem":"...","mensagem_curta":"..."}',
+      '"nota" vai de 0 a 10 e mede o quanto o lead está pronto para uma reunião produtiva. "perguntas_reuniao" só se a decisão for agendar (até 3). Listas sem itens vão vazias.',
+      '',
+      'CONVERSA DO LEAD:',
+      conv
+    ].join('\n');
+  }
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  function listBox(title, tone, items) {
+    var b = el('div', 'box tone-' + tone);
+    b.appendChild(el('h3', null, title));
+    var ul = el('ul', 'list');
+    items.forEach(function (t) { ul.appendChild(el('li', null, String(t))); });
+    b.appendChild(ul);
+    return b;
+  }
+
+  function messageBlock(title, text, short) {
+    var wrap = el('div', 'msg' + (short ? ' short' : ''));
+    var head = el('div', 'row');
+    var h = el('h3', null, title);
+    h.style.flex = '1 1 auto';
+    head.appendChild(h);
+    var btn = el('button', 'small primary', 'Copiar');
+    btn.type = 'button';
+    head.appendChild(btn);
+    wrap.appendChild(head);
+    var ta = el('textarea');
+    ta.value = text;
+    ta.id = short ? 'msg-short' : 'msg-main';
+    ta.setAttribute('aria-label', title);
+    wrap.appendChild(ta);
+    var note = el('div', 'status');
+    wrap.appendChild(note);
+    btn.addEventListener('click', function () {
+      function fallback() { ta.focus(); ta.select(); note.textContent = 'Texto selecionado. Use Ctrl+C (ou Cmd+C) para copiar.'; }
+      try {
+        navigator.clipboard.writeText(ta.value).then(function () { note.textContent = 'Copiado.'; }, fallback);
+      } catch (e) { fallback(); }
+    });
+    return wrap;
+  }
+
+  function render(r) {
+    var dec = DEC[r.decisao] || DEC.filtrar;
+    var nota = Number(r.nota);
+    if (!isFinite(nota)) nota = 0;
+    nota = Math.max(0, Math.min(10, Math.round(nota)));
+
+    var out = $('result');
+    out.textContent = '';
+    out.className = 'fade';
+    out.style.display = 'flex';
+    out.style.flexDirection = 'column';
+    out.style.gap = '16px';
+
+    var v = el('div', 'verdict tone-' + dec.tone);
+    var sc = el('div', 'score', String(nota));
+    sc.appendChild(el('small', null, ' /10'));
+    v.appendChild(sc);
+    var what = el('div', 'what');
+    what.appendChild(el('h2', null, dec.label));
+    what.appendChild(el('p', null, String(r.resumo || '')));
+    if (r.proximo_passo) {
+      var np = el('p', 'next');
+      np.appendChild(el('strong', null, 'Agora: '));
+      np.appendChild(document.createTextNode(String(r.proximo_passo)));
+      what.appendChild(np);
+    }
+    v.appendChild(what);
+    out.appendChild(v);
+
+    out.appendChild(messageBlock('Mensagem para enviar', String(r.mensagem || ''), false));
+    if (r.mensagem_curta) out.appendChild(messageBlock('Versão curta', String(r.mensagem_curta), true));
+    if (Array.isArray(r.conferir_antes) && r.conferir_antes.length) out.appendChild(listBox('Conferir antes de responder (sites oficiais)', 'warn', r.conferir_antes));
+
+    var det = el('details', 'more');
+    det.appendChild(el('summary', null, 'Entender mais'));
+    var dbody = el('div', 'more-body');
+
+    var sigs = Array.isArray(r.sinais) ? r.sinais : [];
+    if (sigs.length) {
+      var ul = el('ul', 'signals');
+      sigs.forEach(function (s) {
+        var st = SIG[s.status] || SIG.parcial;
+        var li = document.createElement('li');
+        var left = el('div');
+        left.appendChild(el('div', 'name', String(s.nome || '')));
+        left.appendChild(el('span', 'chip tone-' + st.tone, st.label));
+        li.appendChild(left);
+        li.appendChild(el('div', 'ev', String(s.evidencia || '')));
+        ul.appendChild(li);
+      });
+      dbody.appendChild(ul);
+    }
+
+    if (Array.isArray(r.alertas) && r.alertas.length) dbody.appendChild(listBox('Alertas', 'bad', r.alertas));
+    if (Array.isArray(r.perguntas_reuniao) && r.perguntas_reuniao.length) dbody.appendChild(listBox('Perguntas para a reunião', 'info', r.perguntas_reuniao));
+
+    det.appendChild(dbody);
+    out.appendChild(det);
+
+    $('empty').hidden = true;
+    out.hidden = false;
+  }
+
+  function setStatus(msg, isErr) {
+    var s = $('st');
+    s.textContent = msg || '';
+    s.className = 'status' + (isErr ? ' err' : '');
+  }
+
+  async function analisar() {
+    if (busy) return;
+    var conv = $('conv').value.trim();
+    var who = ($('who').value.trim() || 'Lolla');
+    try { localStorage.setItem('fdf-who', who); } catch (e) {}
+    if (conv.length < 40) { setStatus('Cole a conversa do lead para analisar.', true); return; }
+    busy = true;
+    $('go').disabled = true;
+    $('go').textContent = 'Analisando…';
+    setStatus('Lendo a conversa. Leva alguns segundos.');
+    try {
+      var sample = await claude.use('sample');
+      if (!sample) { setStatus('A análise por IA não está disponível nesta visualização. Abra o link logado na sua conta Claude.', true); return; }
+      var r = await sample.json(buildPrompt(mask(conv), who), { modelTier: 'default', cache: false });
+      if (!r || typeof r !== 'object') throw { code: 'bad_shape' };
+      render(r);
+      setStatus('');
+    } catch (e) {
+      var code = e && e.code;
+      if (code === 'not_granted') setStatus('Sem permissão para usar a IA. Aceite o pedido de permissão e tente de novo.', true);
+      else if (code === 'rate_limited') setStatus('Muitas análises seguidas. Espere um minuto e tente de novo.', true);
+      else setStatus('Não consegui analisar essa conversa. Tente de novo; se repetir, cole um trecho menor.', true);
+    } finally {
+      busy = false;
+      $('go').disabled = false;
+      $('go').textContent = 'Analisar lead';
+    }
+  }
+
+  $('go').addEventListener('click', analisar);
+  $('pdfbtn').addEventListener('click', function () { $('pdf').click(); });
+  $('pdf').addEventListener('change', async function () {
+    var f = this.files && this.files[0];
+    if (!f) return;
+    setStatus('Lendo o PDF…');
+    try {
+      var t = await lerPdf(f);
+      if (t.replace(/\s/g, '').length < 40) { setStatus('Esse PDF não tem texto selecionável (parece imagem). Copie a conversa e cole no campo.', true); return; }
+      $('conv').value = t;
+      setStatus('PDF carregado (' + f.name + '). Confira o texto e clique em Analisar lead.');
+    } catch (e) {
+      setStatus('Não consegui ler esse PDF. Copie a conversa e cole no campo.', true);
+    }
+    this.value = '';
+  });
+  $('clr').addEventListener('click', function () {
+    $('conv').value = '';
+    $('result').hidden = true;
+    $('result').textContent = '';
+    $('empty').hidden = false;
+    setStatus('');
+  });
+  try { var w = localStorage.getItem('fdf-who'); if (w) $('who').value = w; } catch (e) {}
+})();
+</script>
+
+</body></html>
